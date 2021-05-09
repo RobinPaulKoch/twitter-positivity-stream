@@ -11,6 +11,9 @@ jupyterlab = "*"
 ipython = "*"
 ipykernel = "*"
 mysql-connector-python = "*"
+pipfile = "*"
+tweepy = "*"
+unidecode = "*"
 
 [dev-packages]
 

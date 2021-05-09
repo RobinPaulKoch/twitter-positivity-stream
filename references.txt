@@ -1,0 +1,8 @@
+Used Sources:
+
+For SQL connectivity:
+https://realpython.com/python-mysql/#:~:text=Installing%20MySQL%20Server%20and%20MySQL%20Connector%2FPython,-Now%2C%20to%20start&text=MySQL%20server%20will%20provide%20all,it%20using%20MySQL%20Connector%2FPython.&text=Installing%20MySQL%20Server%20and%20MySQL%20Connector%2FPython,-Now%2C%20to%20start&text=MySQL%20server%20will%20provide%20all,it%20using%20MySQL%20Connector%2FPython.
+
+For sentiment analysis:
+https://towardsdatascience.com/twitter-sentiment-analysis-in-python-1bafebe0b566
+https://www.pluralsight.com/guides/building-a-twitter-sentiment-analysis-in-python

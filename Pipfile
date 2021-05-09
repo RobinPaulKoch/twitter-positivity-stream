@@ -14,6 +14,11 @@ mysql-connector-python = "*"
 pipfile = "*"
 tweepy = "*"
 unidecode = "*"
+pymysql = "*"
+sqlalchemy = "*"
+cryptography = "*"
+textblob = "*"
+nltk = "*"
 
 [dev-packages]
 

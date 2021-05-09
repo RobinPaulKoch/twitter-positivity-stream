@@ -6,13 +6,15 @@ import csv
 import textblob
 import time
 
-from config import consumer_key, consumer_secret, access_token, access_token_secret
+from config import api_key, api_secret_key, access_token, access_token_secret
 from datetime import datetime
 from textblob import TextBlob
 from database_connector_class import MySQLConnection
 from tweepy import StreamListener, Stream
 from unidecode import unidecode
 
+DBNAME = 'twitterstream'
+TBLNAME = 'tweet_records'
 pd.set_option("display.max_rows", None, "display.max_columns", None)
 
 class TweetSnap:
@@ -53,23 +55,62 @@ def test_tweepy_connection(api):
 def retrieve_current_time():
     # datetime object containing current date and time
     now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
     print("date and time =", dt_string)
     return dt_string
 
-def insert_into_db(dbConnection, rows):
-    rows.to_sql('bierquery_tweets', con=dbConnection, if_exists='append')
-    dbConnection.close()
+def create_output_table(rows):
+    sql = f"""
+        SELECT * FROM information_schema.tables
+        WHERE table_name = {tbl};
+    """
+    SQLconnection.execute(sql)
+
+
+def insert_into_dbtbl(SQLconnection, tbl, rows):
+
+    tbl = "tweet_records"
+    SQLEngine = SQLconnection.connect_with_alchemy()
+    engine_connection = SQLEngine.connect()
+
+
+    sql = f"""
+        SELECT * FROM information_schema.tables
+        WHERE table_name = {tbl};
+    """
+    result = SQLconnection.execute(sql, return_result=True)
+
+    if result is None:
+        print(f"Table '{tbl}' does not exist yet! This run will be considered\
+                to be the initial run and 48 hours of tweets will be stored\
+                within the database!' ")
+
+        sql = f"""
+            CREATE TABLE twitterstream.tweet_records(
+            	deploy_time TIMESTAMP,
+                id BIGINT PRIMARY KEY,
+                tweet VARCHAR(250),
+                sentiment FLOAT
+            );
+        """
+        SQLconnection.execute(sql)
+
+    # TODO: Write function that ensures only the deltas are inserted into the database
+
+    #Insert the rows into the database
+    rows.to_sql(tbl, con=engine_connection, if_exists='append', index=False)
+
+    engine_connection.close()
+
+    print(f"Insertion into the database completed!")
+
 
 #Get time of deployment for inserts into the database
 time = retrieve_current_time()
 
 #Set up the MySQL connection:
-SQL_conn = MySQLConnection()
-cursor = SQL_conn.return_cursor()
-SQLEngine = SQL_conn.connect_with_alchemy('twitterstream')
-dbConnection = SQLEngine.connect()
-
+SQLconnection = MySQLConnection(DBNAME)
+SQLconnection.test_connect()
 
 #Authorization part for Twitter
 # Keys and tokens -> Set up your own config.py file with the tokens and keys!
@@ -94,18 +135,14 @@ df = pd.json_normalize(json_data)
 
 # Determine sentiment
 rows = (
-    pd.concat([pd.Series([time for x in range(len(df.index))], name='deploy_time'), df[['id', 'created_at', 'text']]], axis = 1)
+    # pd.concat([pd.Series([time for x in range(len(df.index))], name='deploy_time'), df[['id', 'created_at', 'text']]], axis = 1)
+    pd.concat([pd.Series([time for x in range(len(df.index))], name='deploy_time'), df[['id', 'text']]], axis = 1)
     .assign(sentiment = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[0]))
-    .assign(sentiment = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[1]))
+    .rename({'text': 'tweet'}, axis='columns')
+    # .assign(sentiment = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[1]))
 )
 
-rows
-
 # Call function to insert rows into the database
-insert_into_db(dbConnection, rows)
+insert_into_dbtbl(SQLconnection, TBLNAME, rows)
 
-# code to be made in functions:
-blob = TextBlob(tweets[1])
-if blob.detect_language() is not 'en':
-    blob = blob.translate(to='nl')
-    time.sleep(1)
+# End of Script

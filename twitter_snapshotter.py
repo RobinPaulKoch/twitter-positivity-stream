@@ -26,7 +26,6 @@ class TweetSnap:
     def search_results(self):
         return api.search(q=self.search_query, count=100)
 
-
     def store_tweets(self):
         l = []
         for tweet in api.search(q=self.search_query, lang=self.language, result_type = self.result_type):
@@ -87,10 +86,11 @@ def insert_into_dbtbl(SQLconnection, tbl, rows):
 
         sql = f"""
             CREATE TABLE twitterstream.tweet_records(
-            	deploy_time TIMESTAMP,
+            	deploy_timestamp TIMESTAMP,
                 id BIGINT PRIMARY KEY,
                 tweet VARCHAR(250),
-                sentiment FLOAT
+                sentiment FLOAT,
+                subjectivity FLOAT
             );
         """
         SQLconnection.execute(sql)
@@ -105,44 +105,44 @@ def insert_into_dbtbl(SQLconnection, tbl, rows):
     print(f"Insertion into the database completed!")
 
 
-#Get time of deployment for inserts into the database
-time = retrieve_current_time()
+if __name__ == "__main__":
 
-#Set up the MySQL connection:
-SQLconnection = MySQLConnection(DBNAME)
-SQLconnection.test_connect()
+    #Get time of deployment for inserts into the database
+    time = retrieve_current_time()
 
-#Authorization part for Twitter
-# Keys and tokens -> Set up your own config.py file with the tokens and keys!
-consumer_token = api_key
-consumer_secret = api_secret_key
-access_token = access_token
-access_token_secret = access_token_secret
+    #Set up the MySQL connection:
+    SQLconnection = MySQLConnection(DBNAME)
+    SQLconnection.test_connect()
 
-# Authorization
-auth = tweepy.OAuthHandler(consumer_token, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
+    #Authorization part for Twitter
+    # Keys and tokens -> Set up your own config.py file with the tokens and keys!
+    consumer_token = api_key
+    consumer_secret = api_secret_key
+    access_token = access_token
+    access_token_secret = access_token_secret
 
-api = tweepy.API(auth)
+    # Authorization
+    auth = tweepy.OAuthHandler(consumer_token, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
 
-# twitter_search = TweetSnap('biertje', 'nl', 'recent')
-twitter_search = TweetSnap('heineken', 'en', 'recent')
-results = twitter_search.search_results()
-tweets = twitter_search.store_tweets()
+    api = tweepy.API(auth)
 
-json_data = [r._json for r in results]
-df = pd.json_normalize(json_data)
+    # twitter_search = TweetSnap('biertje', 'nl', 'recent')
+    twitter_search = TweetSnap('heineken', 'en', 'recent')
+    results = twitter_search.search_results()
+    tweets = twitter_search.store_tweets()
 
-# Determine sentiment
-rows = (
-    # pd.concat([pd.Series([time for x in range(len(df.index))], name='deploy_time'), df[['id', 'created_at', 'text']]], axis = 1)
-    pd.concat([pd.Series([time for x in range(len(df.index))], name='deploy_time'), df[['id', 'text']]], axis = 1)
-    .assign(sentiment = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[0]))
-    .rename({'text': 'tweet'}, axis='columns')
-    # .assign(sentiment = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[1]))
-)
+    json_data = [r._json for r in results]
+    df = pd.json_normalize(json_data)
 
-# Call function to insert rows into the database
-insert_into_dbtbl(SQLconnection, TBLNAME, rows)
+    # Determine sentiment
+    rows = (
+        # pd.concat([pd.Series([time for x in range(len(df.index))], name='deploy_time'), df[['id', 'created_at', 'text']]], axis = 1)
+        pd.concat([pd.Series([time for x in range(len(df.index))], name='deploy_timestamp'), df[['id', 'text']]], axis = 1)
+        .assign(sentiment = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[0]))
+        .assign(subjectivity = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[1]))
+        .rename({'text': 'tweet'}, axis='columns')
+    )
 
-# End of Script
+    # Call function to insert rows into the database
+    insert_into_dbtbl(SQLconnection, TBLNAME, rows)

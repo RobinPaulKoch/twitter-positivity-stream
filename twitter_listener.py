@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import tweepy
+from config import db_user, db_password, api_key, api_secret_key, access_token, access_token_secret
 from tweepy import StreamListener, Stream
 from unidecode import unidecode
 import json
@@ -28,10 +29,10 @@ class StdOutListener(StreamListener):
             return False
 
 
-consumer_token = '6S01QCbapFtkIkac6nM00A9QM'
-consumer_secret = 'XYuxZ1e455s8q5WOBB7OLhyrmL8hz3Pb3v82EHRGoLSQhDq7HE'
-access_token = '1389993571433033731-9tZ7q2RO1QKqphvgIyxyiKiFO4Old4'
-access_token_secret = '57A2mCH2y4d2vQf9c6PAX985ZyzglnU5iGNHR2hzJuHzX'
+consumer_token = api_key
+consumer_secret = api_secret_key
+access_token = access_token
+access_token_secret = access_token_secret
 
 # Authorization
 auth = tweepy.OAuthHandler(consumer_token, consumer_secret)

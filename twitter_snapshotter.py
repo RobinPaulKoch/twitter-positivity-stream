@@ -13,10 +13,13 @@ from database_connector_class import MySQLConnection
 from tweepy import StreamListener, Stream
 from unidecode import unidecode
 
+
 DBNAME = 'twitterstream'
 TBLNAME = 'tweet_records'
 SEARCHQ = 'heineken'
 # pd.set_option("display.max_rows", None, "display.max_columns", None)
+
+# Test for develop only
 
 class TweetSnap:
     def __init__(self, search_query, language, result_type, since_id=0):

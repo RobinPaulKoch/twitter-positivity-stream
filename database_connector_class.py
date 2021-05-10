@@ -1,9 +1,10 @@
 import pandas as pd
+import pymysql
+import cryptography
+from config import db_user, db_password
 from getpass import getpass
 from mysql.connector import connect, Error
 from sqlalchemy import create_engine
-import pymysql
-import cryptography
 
 class MySQLConnection:
     """
@@ -34,8 +35,10 @@ class MySQLConnection:
 
     def __init__(self, dbname='default'):
         self.host="localhost"
-        self.user=input("Enter username: ")
-        self.password=getpass("Enter password: ")
+        # self.user=input("Enter username: ")
+        self.user = db_user
+        # self.password=getpass("Enter password: ")
+        self.password = db_password
         self.dbname = dbname
 
     def test_connect(self):

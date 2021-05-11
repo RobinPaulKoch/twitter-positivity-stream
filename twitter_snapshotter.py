@@ -79,7 +79,7 @@ if __name__ == "__main__":
     result = db_trafficker.check_tbl_exists(TBLNAME)
 
     if result == False:
-        create_dbtbl(SQLconnection, TBLNAME)
+        db_trafficker.create_dbtbl(TBLNAME)
         id_enpoint = 0
     else:
     #Fetch the latest timestamp and record ID from the database

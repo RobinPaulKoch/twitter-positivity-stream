@@ -34,7 +34,7 @@ class MySQLConnection:
     """
 
     def __init__(self, dbname='default'):
-        self.host="localhost"
+        self.host="127.0.0.1"
         # self.user=input("Enter username: ")
         self.user = db_user
         # self.password=getpass("Enter password: ")

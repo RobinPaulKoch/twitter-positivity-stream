@@ -14,4 +14,5 @@ COPY . / tmp/twitter-positivity-stream
 
 COPY . .
 
-CMD [ "python", "-m" , "run", "--host=0.0.0.0"]
+CMD ["twitter_snapshotter.py"]
+ENTRYPOINT ["python3"]

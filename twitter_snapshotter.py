@@ -6,6 +6,7 @@ import csv
 import textblob
 import time
 
+from threading import Thread
 from config import db_user, db_password, api_key, api_secret_key, access_token, access_token_secret
 from datetime import datetime
 from textblob import TextBlob
@@ -128,4 +129,4 @@ if __name__ == "__main__":
         db_trafficker.insert_into_dbtbl(TBLNAME, rows)
         print(f"Insertion into the database completed!")
     except:
-        print(f"Something went wrong with the insertion into the database")
+        raise Exception(f"Something went wrong with the insertion into the database")

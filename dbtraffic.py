@@ -20,11 +20,22 @@ class dbtraffic:
 
     Methods
     -------
-    execute(statement, return_result)
-        Executes SQL code on the DB. Returns the result if desired (if=True)
 
-    connect_with_alchemy()
-        Creates an alchemy engine class with the given database.
+
+    check_tbl_exists(self, tbl)
+        Returns True if table exists within the DB. False otherwise
+
+    create_dbtbl()
+        For initial run creates the table instance on the chosen database
+
+    fetch_times_db(self, tbl):
+        Fetches the last record ID and creation time from database
+
+    connect_with_alchemy(self):
+        Creates an SQL engine object to efficiently insert rows to the database
+
+    insert_into_dbtbl(self, tbl, rows):
+        Uses the SQL engine to insert the given rows to the database
 
     """
 
@@ -34,13 +45,6 @@ class dbtraffic:
 
 
     # Functions to facilitate data exchange with the database
-    def create_output_table(self, rows):
-        sql = f"""
-            SELECT * FROM information_schema.tables
-            WHERE table_name = {tbl};
-        """
-        self.SQLconnection.execute(sql)
-
 
     def check_tbl_exists(self, tbl):
 

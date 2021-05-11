@@ -10,6 +10,7 @@ from config import db_user, db_password, api_key, api_secret_key, access_token, 
 from datetime import datetime
 from textblob import TextBlob
 from database_connector_class import MySQLConnection
+from dbtraffic import dbtraffic
 from tweepy import StreamListener, Stream
 from unidecode import unidecode
 
@@ -54,68 +55,12 @@ def test_tweepy_connection(api):
     except:
         print("Error during authentication")
 
-# Functions to facilitate data exchange with the database
 def retrieve_current_time():
     # datetime object containing current date and time
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
     print("date and time =", dt_string)
     return dt_string
-
-def create_output_table(rows):
-    sql = f"""
-        SELECT * FROM information_schema.tables
-        WHERE table_name = {tbl};
-    """
-    SQLconnection.execute(sql)
-
-
-def check_tbl_exists(SQLConnection, tbl):
-
-    tbl = 'tweet_records'
-    sql = f"""
-        SELECT * FROM information_schema.tables
-        WHERE table_name = '{tbl}';
-    """
-    result = SQLconnection.execute(sql, return_result=True)
-
-    if result:
-        return True
-    else:
-        return False
-
-
-def create_dbtbl(SQLConnection, tbl):
-
-    sql = f"""
-        CREATE TABLE twitterstream.{tbl}(
-            twitter_query VARCHAR(100),
-        	deploy_timestamp TIMESTAMP,
-            id BIGINT PRIMARY KEY,
-            created_at TIMESTAMP,
-            tweet VARCHAR(250),
-            sentiment FLOAT,
-            subjectivity FLOAT
-        );
-    """
-    SQLconnection.execute(sql)
-
-def fetch_times_db(SQLconnection, tbl):
-    sql = f"""SELECT MAX(id), MAX(created_at) FROM twitterstream.{tbl};"""
-    return SQLconnection.execute(sql, return_result=True)
-
-
-def insert_into_dbtbl(SQLconnection, tbl, rows):
-
-    SQLEngine = SQLconnection.connect_with_alchemy()
-    engine_connection = SQLEngine.connect()
-
-    #Insert the rows into the database
-    rows.to_sql(tbl, con=engine_connection, if_exists='append', index=False)
-
-    engine_connection.close()
-
-    print(f"Insertion into the database completed!")
 
 
 if __name__ == "__main__":
@@ -127,15 +72,17 @@ if __name__ == "__main__":
     SQLconnection = MySQLConnection(DBNAME)
     SQLconnection.test_connect()
 
+    db_trafficker = dbtraffic(SQLconnection)
+
     #Check if database with table already exists
-    result = check_tbl_exists(SQLconnection, TBLNAME)
+    result = db_trafficker.check_tbl_exists(TBLNAME)
 
     if result == False:
         create_dbtbl(SQLconnection, TBLNAME)
         id_enpoint = 0
     else:
     #Fetch the latest timestamp and record ID from the database
-        r = fetch_times_db(SQLconnection, TBLNAME)
+        r = db_trafficker.fetch_times_db(TBLNAME)
         id_endpoint = r[0][0]
         creation_endpoint = r[0][1]
         print(f"latest query ID = {id_endpoint} with creation date {creation_endpoint}")
@@ -176,5 +123,9 @@ if __name__ == "__main__":
         .rename({'text': 'tweet'}, axis='columns')
     )
 
-    # Call function to insert rows into the database
-    insert_into_dbtbl(SQLconnection, TBLNAME, rows)
+    # Try using the db_trafficker class to insert into the database
+    try:
+        db_trafficker.insert_into_dbtbl(TBLNAME, rows)
+        print(f"Insertion into the database completed!")
+    except:
+        print(f"Something went wrong with the insertion into the database")

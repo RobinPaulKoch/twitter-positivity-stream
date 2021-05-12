@@ -10,7 +10,7 @@ from threading import Thread
 from config import db_user, db_password, api_key, api_secret_key, access_token, access_token_secret
 from datetime import datetime
 from textblob import TextBlob
-from database_connector_class import MySQLConnection
+from library.database_connector_class import MySQLConnection
 from library.dbtraffic import DBTrafficker
 from library.tweetstreamer import TweetStreamer
 from tweepy import StreamListener, Stream

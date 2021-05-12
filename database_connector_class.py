@@ -40,14 +40,16 @@ class MySQLConnection:
         # self.password=getpass("Enter password: ")
         self.password = db_password
         self.dbname = dbname
+        self.port = 3306
 
     def test_connect(self):
         try:
             with connect(
-                host="localhost",
+                host=self.host,
                 user=self.user,
                 password=self.password,
-                database=self.dbname
+                database=self.dbname,
+                port = self.port
             ) as connection:
                 print(f"achieved to connect with {connection} and database '{self.dbname}''!")
         except Error as e:
@@ -56,10 +58,11 @@ class MySQLConnection:
     def execute(self, statement, return_result=False):
         try:
             with connect(
-                host="localhost",
+                host=self.host,
                 user=self.user,
                 password=self.password,
-                database=self.dbname
+                database=self.dbname,
+                port = self.port
             ) as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(statement)
@@ -71,12 +74,13 @@ class MySQLConnection:
 
     def return_cursor(self):
         with connect(
-            host="localhost",
+            host=self.host,
             user=self.user,
             password=self.password,
-            database=self.dbname
+            database=self.dbname,
+            port = self.port
         ) as connection:
             return connection.cursor()
 
     def connect_with_alchemy(self):
-        return create_engine(f'mysql+pymysql://{self.user}:{self.password}@localhost/{self.dbname}', pool_recycle=3600)
+        return create_engine(f'mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbname}', pool_recycle=3600)

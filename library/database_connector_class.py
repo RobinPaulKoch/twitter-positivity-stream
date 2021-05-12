@@ -1,7 +1,7 @@
 import pandas as pd
 import pymysql
 import cryptography
-from config import db_user, db_password
+from keys import db_user, db_password
 from getpass import getpass
 from mysql.connector import connect, Error
 from sqlalchemy import create_engine

@@ -7,8 +7,6 @@ from unidecode import unidecode
 import json
 import csv
 
-tweepy.__version__
-
 class StdOutListener(StreamListener):
     def on_status(self, status):
         # Filtering English language tweets from users with more than 500 followers
@@ -28,22 +26,23 @@ class StdOutListener(StreamListener):
             # returning False in on_error disconnects the stream
             return False
 
+if __name__ == "__main__":
 
-consumer_token = api_key
-consumer_secret = api_secret_key
-access_token = access_token
-access_token_secret = access_token_secret
+    consumer_token = api_key
+    consumer_secret = api_secret_key
+    access_token = access_token
+    access_token_secret = access_token_secret
 
-# Authorization
-auth = tweepy.OAuthHandler(consumer_token, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
+    # Authorization
+    auth = tweepy.OAuthHandler(consumer_token, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
 
-l= StdOutListener()
-stream = Stream(auth, l)
+    l= StdOutListener()
+    stream = Stream(auth, l)
 
-csvw = csv.writer(open("blank.csv", "a"))
-csvw.writerow(['twitter_id', 'name', 'created_at',
-               'followers_count', 'text'])
-stream.filter(track=['bierte'], is_async=True)
+    csvw = csv.writer(open("blank.csv", "a"))
+    csvw.writerow(['twitter_id', 'name', 'created_at',
+                   'followers_count', 'text'])
+    stream.filter(track=['bierte'], is_async=True)
 
-stream.disconnect()
+    stream.disconnect()

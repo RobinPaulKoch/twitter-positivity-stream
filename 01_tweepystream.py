@@ -9,8 +9,9 @@ import re
 import regex
 import concurrent.futures
 
+from configurations import config
 from threading import Thread
-from config import db_user, db_password, api_key, api_secret_key, access_token, access_token_secret
+from keys import db_user, db_password, api_key, api_secret_key, access_token, access_token_secret
 from datetime import datetime, timedelta
 from textblob import TextBlob
 from library.database_connector_class import MySQLConnection
@@ -20,10 +21,10 @@ from tweepy import StreamListener, Stream
 from unidecode import unidecode
 
 # Constants. Can later be distributed in seperate containers for scaling with Docker + Swarm of Kubernetes
-DBNAME = 'twitterstream'
-TBLNAME = 'tweet_records'
-SEARCHQ = 'heineken'
-UTCTIME_DIFF = 2 #If you want to transfer the retrieved dates to "localtime"
+DBNAME = config.DBNAME
+TBLNAME = config.TBLNAME
+SEARCHQ = config.SEARCHQ
+UTCTIME_DIFF = config.UTCTIME_DIFF #If you want to transfer the retrieved dates to "localtime"
 
 # Functions
 def make_unicode(input):

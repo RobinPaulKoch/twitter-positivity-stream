@@ -12,6 +12,8 @@ RUN cd /tmp && pipenv lock --keep-outdated --requirements > requirements.txt
 RUN pip install -r /tmp/requirements.txt
 COPY . / tmp/twitter-positivity-stream
 
+EXPOSE 5000
+
 COPY . .
 
 CMD ["twitter_snapshotter.py"]

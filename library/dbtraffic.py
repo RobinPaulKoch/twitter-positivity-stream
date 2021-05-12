@@ -6,7 +6,7 @@ from getpass import getpass
 from mysql.connector import connect, Error
 from sqlalchemy import create_engine
 
-class dbtraffic:
+class DBTrafficker:
     """
     A class object that functions as the highway between the functional shell
     of the application and the database

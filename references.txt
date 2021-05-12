@@ -6,3 +6,6 @@ https://realpython.com/python-mysql/#:~:text=Installing%20MySQL%20Server%20and%2
 For sentiment analysis:
 https://towardsdatascience.com/twitter-sentiment-analysis-in-python-1bafebe0b566
 https://www.pluralsight.com/guides/building-a-twitter-sentiment-analysis-in-python
+
+For Docker variables:
+https://manifold.co/blog/arguments-and-variables-in-docker-94746642f64b

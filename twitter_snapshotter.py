@@ -11,39 +11,17 @@ from config import db_user, db_password, api_key, api_secret_key, access_token, 
 from datetime import datetime
 from textblob import TextBlob
 from database_connector_class import MySQLConnection
-from dbtraffic import dbtraffic
+from library.dbtraffic import DBTrafficker
+from library.tweetstreamer import TweetStreamer
 from tweepy import StreamListener, Stream
 from unidecode import unidecode
 
-
+# Constants. Can later be distributed in seperate containers for scaling with Docker + Swarm of Kubernetes
 DBNAME = 'twitterstream'
 TBLNAME = 'tweet_records'
 SEARCHQ = 'heineken'
-# pd.set_option("display.max_rows", None, "display.max_columns", None)
 
-# Test for develop only
-
-class TweetSnap:
-    def __init__(self, search_query, language, result_type, since_id=0):
-        self.search_query = search_query
-        self.language = language
-        self.result_type = result_type
-
-    def search_results(self, count=100, since_id=0):
-        return api.search(q=self.search_query, count=1000, since_id=since_id)
-
-    def store_tweets(self):
-        l = []
-        for tweet in api.search(q=self.search_query, lang=self.language, result_type = self.result_type):
-            tweet_text = unidecode(tweet.text)
-            l.append(tweet_text)
-        return l
-
-    def print_stream(self, max):
-        for tweet in api.search(q=self.search_query, lang=self.language, result_type = self.result_type, rpp=max):
-            tweet_text = unidecode(tweet.text)
-            print(f"tweet: {tweet_text}")
-
+# Functions
 def make_unicode(input):
     if type(input) != unicode:
         input =  input.decode('utf-8')
@@ -73,7 +51,7 @@ if __name__ == "__main__":
     SQLconnection = MySQLConnection(DBNAME)
     SQLconnection.test_connect()
 
-    db_trafficker = dbtraffic(SQLconnection)
+    db_trafficker = DBTrafficker(SQLconnection)
 
     #Check if database with table already exists
     result = db_trafficker.check_tbl_exists(TBLNAME)
@@ -102,7 +80,7 @@ if __name__ == "__main__":
     api = tweepy.API(auth)
 
     # twitter_search = TweetSnap('biertje', 'nl', 'recent')
-    twitter_search = TweetSnap(SEARCHQ, 'en', 'recent')
+    twitter_search = TweetStreamer(api, SEARCHQ, 'en', 'recent')
     results = twitter_search.search_results(count=100, since_id=id_endpoint)
     tweets = twitter_search.store_tweets()
 

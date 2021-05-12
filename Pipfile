@@ -19,8 +19,8 @@ sqlalchemy = "*"
 cryptography = "*"
 textblob = "*"
 nltk = "*"
-apache-airflow = "*"
 mysqlclient = "*"
+luigi = "*"
 
 [dev-packages]
 

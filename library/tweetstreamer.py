@@ -5,8 +5,7 @@ import json
 import csv
 
 from threading import Thread
-from config import db_user, db_password, api_key, api_secret_key, access_token, access_token_secret
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from textblob import TextBlob
 from tweepy import StreamListener, Stream
 from unidecode import unidecode
@@ -20,6 +19,14 @@ class TweetStreamer:
 
     def search_results(self, count=100, since_id=0):
         return self.api.search(q=self.search_query, count=count, since_id=since_id)
+
+    def search_results_30day(
+                            self,
+                            max=100,
+                            fromDate=(datetime.now() - timedelta(hours=48)).strftime('%Y%m%d%H%M'),
+                            toDate=(datetime.now() - timedelta(hours=2)).strftime('%Y%m%d%H%M')
+                        ):
+        return self.api.search_30_day(environment_name='production', query=self.search_query, maxResults=max, fromDate=fromDate, toDate=toDate)
 
     def store_tweets(self):
         l = []

@@ -7,13 +7,14 @@ import textblob
 import time
 import re
 import regex
+import concurrent.futures
 
 from threading import Thread
 from config import db_user, db_password, api_key, api_secret_key, access_token, access_token_secret
-from datetime import datetime
+from datetime import datetime, timedelta
 from textblob import TextBlob
 from library.database_connector_class import MySQLConnection
-from library.dbtraffic import DBTrafficker
+from library.dbfunctions import DBTrafficker
 from library.tweetstreamer import TweetStreamer
 from tweepy import StreamListener, Stream
 from unidecode import unidecode
@@ -22,6 +23,7 @@ from unidecode import unidecode
 DBNAME = 'twitterstream'
 TBLNAME = 'tweet_records'
 SEARCHQ = 'heineken'
+UTCTIME_DIFF = 2 #If you want to transfer the retrieved dates to "localtime"
 
 # Functions
 def make_unicode(input):
@@ -65,11 +67,13 @@ if __name__ == "__main__":
     if result == False:
         db_trafficker.create_dbtbl(TBLNAME)
         id_endpoint = 0
+        creation_endpoint_utc = None
     else:
     #Fetch the latest timestamp and record ID from the database
         r = db_trafficker.fetch_times_db(TBLNAME)
         id_endpoint = r[0][0]
         creation_endpoint = r[0][1]
+        creation_endpoint_utc = (creation_endpoint - timedelta(hours=UTCTIME_DIFF)).strftime('%Y%m%d%H%M')
         print(f"latest query ID = {id_endpoint} with creation date {creation_endpoint}")
 
     #Authorization part for Twitter
@@ -85,20 +89,20 @@ if __name__ == "__main__":
 
     api = tweepy.API(auth)
 
-    # twitter_search = TweetSnap('biertje', 'nl', 'recent')
     twitter_search = TweetStreamer(api, SEARCHQ, 'en', 'recent')
-    results = twitter_search.search_results(count=100, since_id=id_endpoint)
+    # results = twitter_search.search_results(count=100, since_id=id_endpoint)
+    results = twitter_search.search_results_30day(max=100, fromDate=creation_endpoint_utc)
 
     tweets = twitter_search.store_tweets()
 
     json_data = [r._json for r in results]
     df = pd.json_normalize(json_data)
 
-
     #Set up pd.dataframe with rows to insert into the DB
-    df['created_at'] = pd.to_datetime(df['created_at']).dt.strftime("%Y-%m-%d %H:%M:%S")
+    df['created_at'] = pd.to_datetime(df['created_at']) + timedelta(hours=UTCTIME_DIFF)
+    df['created_at'] = df['created_at'].dt.strftime("%Y-%m-%d %H:%M:%S")
+
     rows = (
-        # pd.concat([pd.Series([time for x in range(len(df.index))], name='deploy_time'), df[['id', 'created_at', 'text']]], axis = 1)
         pd.concat([
             pd.Series([SEARCHQ for x in range(len(df.index))], name='twitter_query'),
             pd.Series([time for x in range(len(df.index))], name='deploy_timestamp'),
@@ -108,6 +112,7 @@ if __name__ == "__main__":
         .assign(sentiment = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[0]))
         .assign(subjectivity = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[1]))
         .rename({'text': 'tweet'}, axis='columns')
+        .loc[df['id'] > id_endpoint]
     )
 
     # Try using the db_trafficker class to insert into the database

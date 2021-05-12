@@ -69,6 +69,7 @@ class DBTrafficker:
                 id BIGINT PRIMARY KEY,
                 created_at TIMESTAMP,
                 tweet VARCHAR(250),
+                emoji_count INT,
                 sentiment FLOAT,
                 subjectivity FLOAT
             );

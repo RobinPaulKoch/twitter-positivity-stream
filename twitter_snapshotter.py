@@ -5,6 +5,8 @@ import json
 import csv
 import textblob
 import time
+import re
+import regex
 
 from threading import Thread
 from config import db_user, db_password, api_key, api_secret_key, access_token, access_token_secret
@@ -41,6 +43,10 @@ def retrieve_current_time():
     print("date and time =", dt_string)
     return dt_string
 
+def count_emojis(s):
+    emoji_pattern = re.compile('[\U0001F300-\U0001F64F]')
+    emojis = emoji_pattern.findall(s)
+    return len(emojis)
 
 if __name__ == "__main__":
 
@@ -58,7 +64,7 @@ if __name__ == "__main__":
 
     if result == False:
         db_trafficker.create_dbtbl(TBLNAME)
-        id_enpoint = 0
+        id_endpoint = 0
     else:
     #Fetch the latest timestamp and record ID from the database
         r = db_trafficker.fetch_times_db(TBLNAME)
@@ -82,6 +88,7 @@ if __name__ == "__main__":
     # twitter_search = TweetSnap('biertje', 'nl', 'recent')
     twitter_search = TweetStreamer(api, SEARCHQ, 'en', 'recent')
     results = twitter_search.search_results(count=100, since_id=id_endpoint)
+
     tweets = twitter_search.store_tweets()
 
     json_data = [r._json for r in results]
@@ -97,6 +104,7 @@ if __name__ == "__main__":
             pd.Series([time for x in range(len(df.index))], name='deploy_timestamp'),
             df[['id', 'created_at', 'text']]
             ], axis = 1)
+        .assign(emoji_count = df['text'].apply(lambda text: count_emojis(text)))
         .assign(sentiment = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[0]))
         .assign(subjectivity = df['text'].apply(lambda tweet: TextBlob(tweet).sentiment[1]))
         .rename({'text': 'tweet'}, axis='columns')

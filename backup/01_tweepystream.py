@@ -26,16 +26,16 @@ TBLNAME = config.TBLNAME
 SEARCHQ = config.SEARCHQ
 UTCTIME_DIFF = config.UTCTIME_DIFF #If you want to transfer the retrieved dates to "localtime"
 MAXTHREADS = 4
-MAXROWS = 100 # This is the current bottleneck: the 30day search feature of the Tweepy API only handles 100 maxresult...
+MAXROWS = 1000
 
 # Functions
-def stream_data(twitter_search, endpoint, maxrows=100, multithread=False, maxthreads=4, **kwargs):
+def stream_data_30day(twitter_search, endpoint, maxrows=100, multithread=False, maxthreads=4, **kwargs):
 
     if endpoint:
 
         #First recalculate time to UTC+0 time
         current_time_utc = datetime.now() - timedelta(hours=UTCTIME_DIFF, minutes=1)
-        endpoint_utc = (endpoint - timedelta(hours=UTCTIME_DIFF, minutes=2))
+        endpoint_utc = (endpoint - timedelta(hours=UTCTIME_DIFF, minutes=1))
 
         if multithread == False:
             # Singlethreaded
@@ -68,6 +68,46 @@ def stream_data(twitter_search, endpoint, maxrows=100, multithread=False, maxthr
         results = twitter_search.search_results_30day(max=maxrows)
         json_data = [r._json for r in results]
         df = pd.json_normalize(json_data)
+
+    return df
+
+def stream_data(twitter_search, endpoint, since_id=None, maxrows=1000, multithread=False, maxthreads=4, **kwargs):
+
+    #First recalculate time to UTC+0 time
+    current_time_utc = datetime.now() - timedelta(hours=UTCTIME_DIFF, minutes=1)
+    endpoint_utc = (endpoint - timedelta(hours=UTCTIME_DIFF, minutes=1))
+
+    current_time_utc
+
+    if multithread == False:
+        # Singlethreaded example
+        maxrows = 1000
+        since_id = 1392844933430661122
+
+        results = twitter_search.search_results(count=100000, since_id=since_id)
+        results = twitter_search.search_results(count=maxrows, since_id=since_id, until=current_time_utc)
+        results
+        json_data = [r._json for r in results]
+        df = pd.json_normalize(json_data)
+
+    elif multithread == True:
+        # Multithread the API call
+        df = pd.DataFrame()
+        futures = []
+        data_list = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=maxthreads) as executor:
+            delta = current_time_utc - endpoint_utc
+            workloadfrac = delta/3
+            for i in range(maxthreads):
+                time.sleep(1)
+                # fromDate = (current_time_utc - (i+1)*workloadfrac).strftime('%Y%m%d%H%M')
+                toDate = (current_time_utc - i*workloadfrac).strftime('%Y%m%d%H%M')
+                futures.append(
+                    executor.submit(twitter_search.search_results, max=maxrows, since_id=since_id, until=toDate)
+                )
+            for future in concurrent.futures.as_completed(futures):
+                json_data = [r._json for r in future.result()]
+                df = pd.concat([df, pd.json_normalize(json_data)], ignore_index=True)
 
     return df
 
@@ -138,8 +178,12 @@ if __name__ == "__main__":
     # Make streamer object
     twitter_search = TweetStreamer(api, SEARCHQ, 'en', 'recent')
 
+    results = twitter_search.search_results(count=100000)
+
+
     # Get Data from object
-    df = stream_data(twitter_search, creation_endpoint, maxrows=MAXROWS, multithread=False)
+    df = stream_data(twitter_search, creation_endpoint, since_id=id_endpoint, maxrows=MAXROWS, multithread=False, maxthreads=4)
+    # df = stream_data(twitter_search, creation_endpoint, maxrows=MAXROWS, multithread=True, maxthreads=4)
 
     #Set up pd.dataframe with rows to insert into the DB
     df['created_at'] = pd.to_datetime(df['created_at']) + timedelta(hours=UTCTIME_DIFF)

@@ -22,7 +22,7 @@ class TweetStreamer:
 
     def search_results_30day(
                             self,
-                            max=100,
+                            max=1000,
                             fromDate=(datetime.now() - timedelta(hours=48)).strftime('%Y%m%d%H%M'),
                             toDate=(datetime.now() - timedelta(hours=2)).strftime('%Y%m%d%H%M')
                         ):

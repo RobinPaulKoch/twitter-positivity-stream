@@ -25,8 +25,45 @@ DBNAME = config.DBNAME
 TBLNAME = config.TBLNAME
 SEARCHQ = config.SEARCHQ
 UTCTIME_DIFF = config.UTCTIME_DIFF #If you want to transfer the retrieved dates to "localtime"
+MAXTHREADS = 4
 
 # Functions
+def stream_data(twitter_search, creation_endpoint, maxrows=100, multithread=False, maxthreads=4, **kwargs):
+
+    #First recalculate time to UTC+0 time
+    current_time_utc = datetime.now() - timedelta(hours=UTCTIME_DIFF, minutes=1)
+    creation_endpoint_utc = (creation_endpoint - timedelta(hours=UTCTIME_DIFF, minutes=1))
+
+    if multithread == False:
+        # Singlethreaded example
+        # results = twitter_search.search_results(count=100, since_id=id_endpoint)
+        fromDate = creation_endpoint_utc.strftime('%Y%m%d%H%M')
+        results = twitter_search.search_results_30day(max=maxrows, fromDate=fromDate)
+        json_data = [r._json for r in results]
+        df = pd.json_normalize(json_data)
+
+    elif multithread == True:
+        # Multithread the API call
+        df = pd.DataFrame()
+        futures = []
+        data_list = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=maxthreads) as executor:
+            delta = current_time_utc - creation_endpoint_utc
+            workloadfrac = delta/3
+            for i in range(maxthreads):
+                time.sleep(1)
+                fromDate = (current_time_utc - (i+1)*workloadfrac).strftime('%Y%m%d%H%M')
+                toDate = (current_time_utc - i*workloadfrac).strftime('%Y%m%d%H%M')
+                futures.append(
+                    executor.submit(twitter_search.search_results_30day, max=100, fromDate=fromDate, toDate = toDate)
+                )
+            for future in concurrent.futures.as_completed(futures):
+                json_data = [r._json for r in future.result()]
+                df = pd.concat([df, pd.json_normalize(json_data)], ignore_index=True)
+
+    return df
+
+
 def make_unicode(input):
     if type(input) != unicode:
         input =  input.decode('utf-8')
@@ -54,7 +91,7 @@ def count_emojis(s):
 if __name__ == "__main__":
 
     #Get time of deployment for inserts into the database
-    time = retrieve_current_time()
+    current_time = retrieve_current_time()
 
     #Set up the MySQL connection:
     SQLconnection = MySQLConnection(DBNAME)
@@ -68,14 +105,16 @@ if __name__ == "__main__":
     if result == False:
         db_trafficker.create_dbtbl(TBLNAME)
         id_endpoint = 0
+        created_endpoint = None
         creation_endpoint_utc = None
     else:
     #Fetch the latest timestamp and record ID from the database
         r = db_trafficker.fetch_times_db(TBLNAME)
         id_endpoint = r[0][0]
         creation_endpoint = r[0][1]
-        creation_endpoint_utc = (creation_endpoint - timedelta(hours=UTCTIME_DIFF)).strftime('%Y%m%d%H%M')
+        creation_endpoint_utc = (creation_endpoint - timedelta(hours=UTCTIME_DIFF, minutes=1)).strftime('%Y%m%d%H%M')
         print(f"latest query ID = {id_endpoint} with creation date {creation_endpoint}")
+
 
     #Authorization part for Twitter
     # Keys and tokens -> Set up your own config.py file with the tokens and keys!
@@ -90,14 +129,12 @@ if __name__ == "__main__":
 
     api = tweepy.API(auth)
 
+    # Make streamer object
     twitter_search = TweetStreamer(api, SEARCHQ, 'en', 'recent')
-    # results = twitter_search.search_results(count=100, since_id=id_endpoint)
-    results = twitter_search.search_results_30day(max=100, fromDate=creation_endpoint_utc)
 
-    tweets = twitter_search.store_tweets()
-
-    json_data = [r._json for r in results]
-    df = pd.json_normalize(json_data)
+    # Get Data from object
+    # df = stream_data(twitter_search, creation_endpoint, maxrows=100, multithread=False, maxthreads=4)
+    df = stream_data(twitter_search, creation_endpoint, maxrows=100, multithread=True, maxthreads=4)
 
     #Set up pd.dataframe with rows to insert into the DB
     df['created_at'] = pd.to_datetime(df['created_at']) + timedelta(hours=UTCTIME_DIFF)
@@ -106,7 +143,7 @@ if __name__ == "__main__":
     rows = (
         pd.concat([
             pd.Series([SEARCHQ for x in range(len(df.index))], name='twitter_query'),
-            pd.Series([time for x in range(len(df.index))], name='deploy_timestamp'),
+            pd.Series([current_time for x in range(len(df.index))], name='deploy_timestamp'),
             df[['id', 'created_at', 'text']]
             ], axis = 1)
         .assign(emoji_count = df['text'].apply(lambda text: count_emojis(text)))

@@ -107,6 +107,7 @@ if __name__ == "__main__":
 
     db_trafficker = DBTrafficker(SQLconnection)
 
+
     #Check if database with table already exists
     result = db_trafficker.check_tbl_exists(TBLNAME)
 

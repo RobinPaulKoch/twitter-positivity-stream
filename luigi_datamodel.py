@@ -6,12 +6,12 @@ import os
 class InsertNewTweets(luigi.Task):
 
     def run(self):
-        os.system('python tweepystream.py')
+        os.system('python 01_tweepystream.py')
 
 class RankTweets(luigi.Task):
 
     def run(self):
-        os.system('rank_tweets.py')
+        os.system('python 02_rank_tweets.py')
 
 if __name__ == '__main__':
      luigi.build([InsertNewTweets(), RankTweets()], local_scheduler=True)

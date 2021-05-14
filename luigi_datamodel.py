@@ -7,6 +7,14 @@ from configurations import config
 
 # for running: python -m luigi --module Luigi_datamodel DataPipeline --local-scheduler
 
+"""
+TODO: Appoint global parameters from this script
+
+Parameter assigned would then be managed like this:
+orchestration -> container -> luigi_datamodel -> individual scripts
+
+"""
+
 class InsertNewTweets(luigi.Task):
     """
     This task is the start of the data pipeline where the data streams in using

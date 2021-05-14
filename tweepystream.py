@@ -29,7 +29,7 @@ UTCTIME_DIFF = config.UTCTIME_DIFF #If you want to transfer the retrieved dates 
 PREMIUM_SEARCH = config.PREMIUM_SEARCH
 MULTITHREAD = False
 MAXTHREADS = 6
-MAXROWS = 100 # This is the current bottleneck for premium search
+MAXROWS = 2500
 
 # Functions
 def stream_premium_data(twitterstreamer, endpoint, maxrows=100, multithread=False, threads=4, **kwargs):
@@ -117,13 +117,28 @@ def stream_normal_data(twitterstreamer, count=100, id_endpoint=0):
     json_data = [r._json for r in results]
     return pd.json_normalize(json_data)
 
-def process_data(df):
+def translate_tweet(text):
+    """I recommend not using this translation function as the TextBlob API
+        for translation does not like it when you make too many requests
+        shortly after each other. -> time.sleep(2)"""
+    try:
+        translation = TextBlob(text).translate(to='eng')
+        time.sleep(2)
+    except:
+        translation = text
+
+    return translation
+
+def process_data(df, id_endpoint=0):
     """processes the returned DF from the API search. Returns a Dataframe object called
         'rows' which can be directly inserted into the DB"""
 
     # Format the creation date for MySQL timestamp standards
     df['created_at'] = pd.to_datetime(df['created_at']) + timedelta(hours=UTCTIME_DIFF)
     df['created_at'] = df['created_at'].dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    #Translate tweets:
+    # df['text'] = df['text'].apply(lambda tweet: translate_tweet(tweet))
 
     # Some pandas data pipeline to create the scores and to subset the incoming DF
     rows = (
@@ -172,6 +187,7 @@ def count_emojis(s):
     emojis = emoji_pattern.findall(s)
     return len(emojis)
 
+
 if __name__ == "__main__":
 
     #Get time of deployment for inserts into the database
@@ -192,7 +208,7 @@ if __name__ == "__main__":
     if result == False:
         db_trafficker.create_dbtbl(TBLNAME)
         id_endpoint = 0
-        created_endpoint = None
+        creation_endpoint = None
     else:
     # If the DB.TBL exists: Fetch the latest timestamp and record ID from the DB
         r = db_trafficker.fetch_times_db(TBLNAME)
@@ -213,22 +229,23 @@ if __name__ == "__main__":
     auth.set_access_token(access_token, access_token_secret)
 
     # Create a Tweepy API object
-    api = tweepy.API(auth, wait_on_rate_limit=True)
+    api = tweepy.API(auth)
 
     # Make streamer object
-    twitterstreamer = TweetStreamer(api, SEARCHQ, 'en', 'recent')
+    twitterstreamer = TweetStreamer(api, SEARCHQ, 'recent')
 
     # Use either the Normal or Premium search functions of the tweepy API
     if PREMIUM_SEARCH == False:
         # Get Data from object
-        df = stream_normal_data(twitterstreamer, count=100, id_endpoint=id_endpoint)
+        df = stream_normal_data(twitterstreamer, count=MAXROWS, id_endpoint=id_endpoint)
 
     elif PREMIUM_SEARCH == True:
         # For premium search functions use:
         df = stream_premium_data(twitterstreamer, creation_endpoint, maxrows=MAXROWS, multithread=MULTITHREAD, threads=MAXTHREADS)
 
     #Dataprocessing steps
-    rows = process_data(df)
+    rows = process_data(df, id_endpoint)
+
 
     # Try using the db_trafficker class to insert into the database
     try:

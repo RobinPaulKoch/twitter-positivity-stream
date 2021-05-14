@@ -43,6 +43,7 @@ class MySQLConnection:
         self.port = 3306
 
     def test_connect(self):
+        """Test connection with the DB"""
         try:
             with connect(
                 host=self.host,
@@ -56,6 +57,17 @@ class MySQLConnection:
                 print(e)
 
     def execute(self, statement, return_result=False):
+        """
+        Goal: Execute statement on DB
+
+        ----------parameters----------
+
+        statement : str
+            The SQL statement to be executed by the cursor
+
+        return_result : boolean
+            True if the results need to be returned
+        """
         try:
             with connect(
                 host=self.host,
@@ -73,6 +85,10 @@ class MySQLConnection:
                 print(e)
 
     def return_cursor(self):
+        """return the cursor itself to execute SQL. Not recommended
+            since using with statements are best practice with cursors
+            and database connections"""
+
         with connect(
             host=self.host,
             user=self.user,
@@ -83,4 +99,5 @@ class MySQLConnection:
             return connection.cursor()
 
     def connect_with_alchemy(self):
+        """returns a SQLalchemy engine object"""
         return create_engine(f'mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbname}', pool_recycle=3600)

@@ -22,7 +22,7 @@ from unidecode import unidecode
 
 """
  Constants. Can later be obtained as system inputs so that you can appoint them dynamically
- from a orchestration tool
+ from a orchestration tool. See also luigi_datamodel.py
 """
 DBNAME = config.DBNAME
 TBLNAME = config.TBLNAME

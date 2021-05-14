@@ -1,16 +1,45 @@
-import pandas as pd
-import numpy as np
-import tweepy
-import json
-import csv
-
-from threading import Thread
 from datetime import datetime, timedelta, timezone
-from textblob import TextBlob
-from tweepy import StreamListener, Stream
 from unidecode import unidecode
 
 class TweetStreamer:
+    """
+    A class that manages requests to the Tweepy API
+    ...
+
+    Attributes
+    ----------
+    api : tweepy.API object
+        the authorized API to stream from
+    search_query : str
+        string with searchquery for API
+    password : str
+        language to use in streaming
+    result_type : str
+        either 'mixed', 'recent' or 'popular'. Adds a filter to the tweepy
+        API so it knows what kind of tweets to stream.
+
+    Methods
+    -------
+
+        search_results() :
+        - uses 'normal' search function to find query results/
+        NOTE: this search function contains a selection of the real tweets and
+        therefore is incomplete
+
+        search_results_30day()
+        - uses the 'premium' tweepy search function to find results in the past
+         30 days. Maximum rows = 100 for the sandbox twitter developer package
+
+        search_results_full_archive()
+        - same as search_results_30day method but searches entire twitter archive
+
+        store_tweets()
+        - store tweets in a list object
+
+        print_stream()
+        - prints the tweets found in search query
+
+    """
     def __init__(self, api, search_query, language, result_type, since_id=0):
         self.api = api
         self.search_query = search_query

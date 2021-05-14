@@ -7,6 +7,14 @@ from configurations import config
 
 # for running: python -m luigi --module Luigi_datamodel DataPipeline --local-scheduler
 
+"""
+TODO: Appoint global parameters from this script
+
+Parameter assigned would then be managed like this:
+orchestration -> container -> luigi_datamodel -> individual scripts
+
+"""
+
 class InsertNewTweets(luigi.Task):
     """
     This task is the start of the data pipeline where the data streams in using
@@ -42,6 +50,7 @@ class RankTweets(luigi.Task):
     """
 
     def requires(self):
+        """First checks whether output was received from the InsertNewTweets Task"""
         return InsertNewTweets()
 
     def run(self):
@@ -49,4 +58,5 @@ class RankTweets(luigi.Task):
 
 
 if __name__ == '__main__':
-     luigi.build([RankTweets()], workers=1, local_scheduler=True)
+    """To keep it simple I only deploy one worker now as the tasks are sequential"""
+    luigi.build([RankTweets()], workers=1, local_scheduler=True)

@@ -2,6 +2,7 @@ from configurations import config
 from library.database_connector_class import MySQLConnection
 from library.dbfunctions import DBTrafficker
 
+# Can later move the constants to the luigi file.
 DBNAME = config.DBNAME
 TBLNAME = config.TBLNAME
 SEARCHQ = config.SEARCHQ

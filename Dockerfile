@@ -16,5 +16,5 @@ EXPOSE 5000
 
 COPY . .
 
-CMD ["twitter_snapshotter.py"]
+CMD ["luigi_datamodel.py"]
 ENTRYPOINT ["python3"]

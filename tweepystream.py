@@ -4,13 +4,11 @@ import regex
 import concurrent.futures
 
 import pandas as pd
-import numpy as np
 import tweepy
 import json
 import textblob
 
 from configurations import config
-from threading import Thread
 from keys import db_user, db_password, api_key, api_secret_key, access_token, access_token_secret
 from datetime import datetime, timedelta
 from textblob import TextBlob

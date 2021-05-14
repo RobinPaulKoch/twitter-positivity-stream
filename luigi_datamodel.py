@@ -51,4 +51,4 @@ class RankTweets(luigi.Task):
 
 if __name__ == '__main__':
     """To keep it simple I only deploy one worker now as the tasks are sequential"""
-     luigi.build([RankTweets()], workers=1, local_scheduler=True)
+    luigi.build([RankTweets()], workers=1, local_scheduler=True)

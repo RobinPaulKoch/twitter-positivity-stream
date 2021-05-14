@@ -116,3 +116,4 @@ I plan to add functionalities to "fill the gap" if no tweets were retrieved for 
 - dynamically looping the API Search request to fill the gap between last tweet id stored in a database and recent tweets to not have any gaps in the database.
 - In-depth guide on how to appoint global parameters to Docker Containers to divide workload 
 - Testing framework for deployment of the new production tag of the code
+- More error handling

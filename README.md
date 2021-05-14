@@ -12,7 +12,7 @@
 </h1>
 
 <h3 align="center">
-	A streamer built on top of the Twitter Python API "Tweepy"
+	A data stream application built on top of the Twitter Python API "Tweepy"
 </h3>
 
 

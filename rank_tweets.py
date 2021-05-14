@@ -24,9 +24,9 @@ if __name__ == "__main__":
 
         	SELECT
         		*
-        		,ROW_NUMBER() OVER(PARTITION BY within_hour ORDER BY emoji_count DESC) AS rank_emoji
-        		,ROW_NUMBER() OVER(PARTITION BY within_hour ORDER BY sentiment DESC) AS rank_sentiment
-        		,ROW_NUMBER() OVER(PARTITION BY within_hour ORDER BY subjectivity DESC) AS rank_subjectivity
+        		,ROW_NUMBER() OVER(PARTITION BY twitter_query, within_hour ORDER BY emoji_count DESC) AS rank_emoji
+        		,ROW_NUMBER() OVER(PARTITION BY twitter_query, within_hour ORDER BY sentiment DESC) AS rank_sentiment
+        		,ROW_NUMBER() OVER(PARTITION BY twitter_query, within_hour ORDER BY subjectivity DESC) AS rank_subjectivity
 
         	FROM
         	(

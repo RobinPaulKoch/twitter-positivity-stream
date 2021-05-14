@@ -26,7 +26,16 @@ class TweetStreamer:
                             fromDate=(datetime.now() - timedelta(hours=48)).strftime('%Y%m%d%H%M'),
                             toDate=(datetime.now() - timedelta(hours=2)).strftime('%Y%m%d%H%M')
                         ):
-        return self.api.search_30_day(environment_name='production', query=self.search_query, maxResults=max, fromDate=fromDate, toDate=toDate)
+        return self.api.search_30_day(environment_name='productions', query=self.search_query, maxResults=max, fromDate=fromDate, toDate=toDate)
+
+    def search_results_full_archive(
+                            self,
+                            max=1000,
+                            fromDate=(datetime.now() - timedelta(hours=48)).strftime('%Y%m%d%H%M'),
+                            toDate=(datetime.now() - timedelta(hours=2)).strftime('%Y%m%d%H%M')
+                        ):
+        return self.api.search_30_day(environment_name='productions', query=self.search_query, maxResults=max, fromDate=fromDate, toDate=toDate)
+
 
     def store_tweets(self):
         l = []

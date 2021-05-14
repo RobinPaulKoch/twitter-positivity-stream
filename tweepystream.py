@@ -25,11 +25,14 @@ DBNAME = config.DBNAME
 TBLNAME = config.TBLNAME
 SEARCHQ = config.SEARCHQ
 UTCTIME_DIFF = config.UTCTIME_DIFF #If you want to transfer the retrieved dates to "localtime"
-MAXTHREADS = 4
+PREMIUM_SEARCH = config.PREMIUM_SEARCH
+MULTITHREAD = False
+MAXTHREADS = 6
 MAXROWS = 100 # This is the current bottleneck: the 30day search feature of the Tweepy API only handles 100 maxresult...
 
 # Functions
-def stream_data(twitter_search, endpoint, maxrows=100, multithread=False, maxthreads=4, **kwargs):
+def stream_premium_data(twitter_search, endpoint, maxrows=100, multithread=False, threads=4, **kwargs):
+
 
     if endpoint:
 
@@ -50,11 +53,11 @@ def stream_data(twitter_search, endpoint, maxrows=100, multithread=False, maxthr
             df = pd.DataFrame()
             futures = []
             data_list = []
-            with concurrent.futures.ThreadPoolExecutor(max_workers=maxthreads) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
                 delta = current_time_utc - endpoint_utc
                 workloadfrac = delta/3
-                for i in range(maxthreads):
-                    time.sleep(1)
+                for i in range(threads):
+                    # time.sleep(1)
                     fromDate = (current_time_utc - (i+1)*workloadfrac).strftime('%Y%m%d%H%M')
                     toDate = (current_time_utc - i*workloadfrac).strftime('%Y%m%d%H%M')
                     futures.append(
@@ -70,6 +73,11 @@ def stream_data(twitter_search, endpoint, maxrows=100, multithread=False, maxthr
         df = pd.json_normalize(json_data)
 
     return df
+
+def stream_normal_data(twitter_search, count=100, id_endpoint=0):
+    results = twitter_search.search_results(count=count, since_id=id_endpoint)
+    json_data = [r._json for r in results]
+    return pd.json_normalize(json_data)
 
 
 def make_unicode(input):
@@ -134,13 +142,20 @@ if __name__ == "__main__":
     auth = tweepy.OAuthHandler(consumer_token, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
 
-    api = tweepy.API(auth)
+    api = tweepy.API(auth, wait_on_rate_limit=True)
 
     # Make streamer object
     twitter_search = TweetStreamer(api, SEARCHQ, 'en', 'recent')
 
-    # Get Data from object
-    df = stream_data(twitter_search, creation_endpoint, maxrows=MAXROWS, multithread=False)
+
+    if PREMIUM_SEARCH == False:
+        # Get Data from object
+        df = stream_normal_data(twitter_search, count=100, id_endpoint=id_endpoint)
+
+    elif PREMIUM_SEARCH == True:
+        # For premium search functions use:
+        df = stream_premium_data(twitter_search, creation_endpoint, maxrows=MAXROWS, multithread=MULTITHREAD, threads=MAXTHREADS)
+
 
     #Set up pd.dataframe with rows to insert into the DB
     df['created_at'] = pd.to_datetime(df['created_at']) + timedelta(hours=UTCTIME_DIFF)

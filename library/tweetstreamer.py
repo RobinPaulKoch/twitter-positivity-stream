@@ -40,7 +40,7 @@ class TweetStreamer:
         - prints the tweets found in search query
 
     """
-    def __init__(self, api, search_query, language, result_type, since_id=0):
+    def __init__(self, api, search_query, language, result_type='recent', since_id=0):
         self.api = api
         self.search_query = search_query
         self.language = language

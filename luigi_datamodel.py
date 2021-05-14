@@ -42,6 +42,7 @@ class RankTweets(luigi.Task):
     """
 
     def requires(self):
+        """First checks whether output was received from the InsertNewTweets Task"""
         return InsertNewTweets()
 
     def run(self):
@@ -49,4 +50,5 @@ class RankTweets(luigi.Task):
 
 
 if __name__ == '__main__':
+    """To keep it simple I only deploy one worker now as the tasks are sequential"""
      luigi.build([RankTweets()], workers=1, local_scheduler=True)

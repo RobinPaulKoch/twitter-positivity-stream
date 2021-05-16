@@ -243,6 +243,9 @@ if __name__ == "__main__":
         # For premium search functions use:
         df = stream_premium_data(twitterstreamer, creation_endpoint, maxrows=MAXROWS, multithread=MULTITHREAD, threads=MAXTHREADS)
 
+    if df.empty:
+        print(f"No new rows were found! Maybe the output table is already up to date?")
+
     #Dataprocessing steps
     rows = process_data(df, id_endpoint)
 
